@@ -1,4 +1,5 @@
 import time
+import sys
 import urllib.error
 import urllib.request
 from selenium import webdriver
@@ -49,6 +50,9 @@ def login(driver, mail, password):
     button.click()
     if driver.current_url == "https://www.pixiv.net/":
         print("login sucsess!")
+    else:
+        print("login Failled")
+        sys.exit(1)
     time.sleep(3)
 
 
