@@ -19,6 +19,31 @@ def main():
     res = driver.get(target_url)
     button = driver.find_element(By.XPATH, '/html/body/div/div[4]/div[2]/div/div/div/div[5]/button')
     button.click()
+    articlelist = get_articlelist(driver, target_url)
+    # imglist = get_imglist(driver, articlelist)
+    # getimg()
+    driver.close
+
+
+def login(driver, mail, password):
+    loginpage = driver.get('https://accounts.pixiv.net/login')
+    time.sleep(1)
+    mailElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[1]/label/input')
+    passwordElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input') 
+    mailElement.send_keys(mail)
+    passwordElement.send_keys(password)
+    button = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/button')
+    # ログインボタンをクリック
+    button.click()
+    time.sleep(2)
+    if driver.current_url == "https://www.pixiv.net/":
+        print("login sucsess!")
+    else:
+        print("login Failled")
+        sys.exit(1)
+
+
+def get_articlelist(driver, target_url):
     articlelist = []
     for i in range(999):
         page = driver.get(target_url + '?page=' + str(i + 1))
@@ -34,27 +59,7 @@ def main():
             articlelist.append(article.get_attribute('href'))
             print(article.get_attribute('href'))
     print("get {} artcles!".format(len(articlelist)))
-    # imglist = get_imglist(driver, articlelist)
-    driver.close
-
-
-def login(driver, mail, password):
-    loginpage = driver.get('https://accounts.pixiv.net/login')
-    time.sleep(1)
-    mailElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[1]/label/input')
-    passwordElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input') 
-    mailElement.send_keys(mail)
-    passwordElement.send_keys(password)
-    button = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/button')
-    # ログインボタンをクリック
-    button.click()
-    if driver.current_url == "https://www.pixiv.net/":
-        print("login sucsess!")
-    else:
-        print("login Failled")
-        sys.exit(1)
-    time.sleep(3)
-
+    return articlelist
 
 def get_imglist(driver, articlelist, bool):
     imglist = []
@@ -65,7 +70,7 @@ def get_imglist(driver, articlelist, bool):
         height = height / 750
         for i in range(1, int(height)):
             driver.execute_script("window.scrollTo(0, "+str(i * 750)+");")
-            time.sleep(1)
+            time.sleep(0.5)
         is_div = driver.find_elements(By.XPATH, 'div[@class="sc-1uv5uvv-2 fyPKbV"]')
         print("is_div=" + str(len(is_div)))
         # 特定のdivが1の場合課金しないとダメ
@@ -85,6 +90,9 @@ def get_imglist(driver, articlelist, bool):
         else:
             print("{} is need maney".format(article_name))
     print(imglist)
+
+
+# def get_img:
 
 
 def download_file(url, target_dir, name):
