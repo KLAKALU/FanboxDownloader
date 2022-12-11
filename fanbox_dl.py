@@ -47,7 +47,8 @@ def login(driver, mail, password):
     button = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/button')
     # ログインボタンをクリック
     button.click()
-    # ログイン判定を実装予定
+    if driver.current_url == "https://www.pixiv.net/":
+        print("login sucsess!")
     time.sleep(3)
 
 
