@@ -33,7 +33,7 @@ def main():
             articlelist.append(article.get_attribute('href'))
             print(article.get_attribute('href'))
     print("get {} artcles!".format(len(articlelist)))
-    imglist = get_imglist(driver, articlelist)
+    # imglist = get_imglist(driver, articlelist)
     driver.close
 
 
@@ -45,7 +45,9 @@ def login(driver, mail, password):
     mailElement.send_keys(mail)
     passwordElement.send_keys(password)
     button = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/button')
+    # ログインボタンをクリック
     button.click()
+    # ログイン判定を実装予定
     time.sleep(3)
 
 
@@ -73,7 +75,7 @@ def get_imglist(driver, articlelist, bool):
                 else:
                     img = driver.find_element(By.XPATH, "/html/body/div[1]/div[5]/div[1]/div/div[3]/div/div[1]/div/article/div[3]/div[{}]/div/div/div/a/div/img".format(j + 1))
                 imgurl = img.get_attribute('href')
-                imglist.append([article_name,imgurl])
+                imglist.append([article_name, imgurl])
                 # download_file(imgurl, target_dir, article_name + "p" + str(i + 1))
         else:
             print("{} is need maney".format(article_name))
