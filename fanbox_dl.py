@@ -12,22 +12,25 @@ def main():
     file = open('data.txt', 'r')
     datalist = file.readlines()
     target_url = datalist[0]
+    target_url = target_url.replace("\n", "")
     target_dir = datalist[1]
     mail = datalist[2]
     password = datalist[3]
     # login(driver, mail, password)
+    # R18 varification
     res = driver.get(target_url)
     button = driver.find_element(By.XPATH, '/html/body/div/div[4]/div[2]/div/div/div/div[5]/button')
     button.click()
     articlelist = get_articlelist(driver, target_url)
+    print(articlelist)
     # imglist = get_imglist(driver, articlelist)
     # getimg()
     driver.close
 
 
 def login(driver, mail, password):
-    loginpage = driver.get('https://accounts.pixiv.net/login')
-    time.sleep(1)
+    loginpage = driver.get('https://accounts.pixiv.net/login?prompt=select_account&return_to=https%3A%2F%2Fwww.fanbox.cc%2Fauth%2Fstart&source=fanbox')
+    time.sleep(0.5)
     mailElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[1]/label/input')
     passwordElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input') 
     mailElement.send_keys(mail)
@@ -36,7 +39,7 @@ def login(driver, mail, password):
     # ログインボタンをクリック
     button.click()
     time.sleep(2)
-    if driver.current_url == "https://www.pixiv.net/":
+    if driver.current_url == "https://www.fanbox.cc/":
         print("login sucsess!")
     else:
         print("login Failled")
@@ -45,19 +48,21 @@ def login(driver, mail, password):
 
 def get_articlelist(driver, target_url):
     articlelist = []
-    for i in range(999):
-        page = driver.get(target_url + '?page=' + str(i + 1))
-        print(target_url + '?page=' + str(i + 1))
+    # for i in range(1, 999):
+    for i in range(25, 999):
+        page = driver.get(target_url + '?page=' + str(i))
         time.sleep(1)
-        if i != 0 and driver.current_url == target_url:
+        # print(target_url + '?page=' + str(i))
+        print(driver.current_url)
+        if driver.current_url == target_url:
             print("serch finish!")
             break
         articles = driver.find_elements(By.XPATH, '//a[@class="sc-1bjj922-0 gwbPAH"]')
-        print(str(i) + " page " + str(len(articles)) + " articles")
         for j in range(len(articles)):
             article = driver.find_element(By.XPATH, "/html/body/div/div[5]/div[1]/div[2]/div[4]/div/div/div/div[1]/a[{}]".format(j + 1))
             articlelist.append(article.get_attribute('href'))
             print(article.get_attribute('href'))
+        print(str(i) + " page " + str(len(articles)) + " articles")
     print("get {} artcles!".format(len(articlelist)))
     return articlelist
 
