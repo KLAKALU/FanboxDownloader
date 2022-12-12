@@ -1,7 +1,8 @@
 import time
 import sys
-import urllib.error
-import urllib.request
+import os
+import shutil
+import csv
 from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -9,30 +10,50 @@ from selenium.webdriver.common.by import By
 
 def main():
     driver = webdriver.Firefox('C:/Users/playe/fanboxdownloader')
-    file = open('data.txt', 'r')
+    file = open('data.txt', 'r', encoding='utf-8')
     datalist = file.readlines()
-    target_url = datalist[0]
+    print(datalist)
+    mail = datalist[0]
+    password = datalist[1]
+    download_path = datalist[2]
+    download_path = download_path.replace("\n", "")
+    target_url = datalist[3]
     target_url = target_url.replace("\n", "")
-    target_dir = datalist[1]
-    mail = datalist[2]
-    password = datalist[3]
-    # login(driver, mail, password)
+    tgt_dir = datalist[4]
+    tgt_dir = tgt_dir.replace
+    print(tgt_dir)
+    target_name = datalist[5]
+    target_name = target_name.replace("\n", "")
+    print("Downloading " + target_name + "s fanbox imgs!")
     # R18 varification
-    res = driver.get(target_url)
+    driver.get(target_url)
     button = driver.find_element(By.XPATH, '/html/body/div/div[4]/div[2]/div/div/div/div[5]/button')
     button.click()
-    articlelist = get_articlelist(driver, target_url)
-    print(articlelist)
-    # imglist = get_imglist(driver, articlelist)
-    # getimg()
+    if os.path.isfile(tgt_dir + 'imglist.csv') is False:
+        articlelist = get_articlelist(driver, target_url)
+        print(articlelist)
+        login(driver, mail, password)
+        imglist = get_imglist(driver, articlelist)
+        with open(tgt_dir + 'imglist.csv', 'x', encoding='utf-8') as file:
+            writer = csv.writer(file, lineterminator='\n')
+            writer.writerows(imglist)
+            # f.writelines([d+"\n" for d in imglist])
+            file.close
+    else:
+        with open(tgt_dir + 'imglist.csv', newline='', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            imglist = [row for row in reader]
+            file.close
+        login(driver, mail, password)
+    write_img(driver, imglist, tgt_dir, target_name, download_path)
     driver.close
 
 
 def login(driver, mail, password):
-    loginpage = driver.get('https://accounts.pixiv.net/login?prompt=select_account&return_to=https%3A%2F%2Fwww.fanbox.cc%2Fauth%2Fstart&source=fanbox')
+    driver.get('https://accounts.pixiv.net/login?prompt=select_account&return_to=https%3A%2F%2Fwww.fanbox.cc%2Fauth%2Fstart&source=fanbox')
     time.sleep(0.5)
     mailElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[1]/label/input')
-    passwordElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input') 
+    passwordElement = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input')
     mailElement.send_keys(mail)
     passwordElement.send_keys(password)
     button = driver.find_element(By.XPATH, '/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/button')
@@ -48,9 +69,8 @@ def login(driver, mail, password):
 
 def get_articlelist(driver, target_url):
     articlelist = []
-    # for i in range(1, 999):
-    for i in range(25, 999):
-        page = driver.get(target_url + '?page=' + str(i))
+    for i in range(1, 999):
+        driver.get(target_url + '?page=' + str(i))
         time.sleep(1)
         # print(target_url + '?page=' + str(i))
         print(driver.current_url)
@@ -66,46 +86,99 @@ def get_articlelist(driver, target_url):
     print("get {} artcles!".format(len(articlelist)))
     return articlelist
 
-def get_imglist(driver, articlelist, bool):
+
+def get_imglist(driver, articlelist):
     imglist = []
     for i in range(len(articlelist)):
-        article = driver.get(articlelist[len(articlelist) - i - 1])
-        driver.maximize_window()
+        driver.get(articlelist[len(articlelist) - i - 1])
         height = driver.execute_script("return document.body.scrollHeight")
-        height = height / 750
-        for i in range(1, int(height)):
-            driver.execute_script("window.scrollTo(0, "+str(i * 750)+");")
-            time.sleep(0.5)
-        is_div = driver.find_elements(By.XPATH, 'div[@class="sc-1uv5uvv-2 fyPKbV"]')
-        print("is_div=" + str(len(is_div)))
-        # 特定のdivが1の場合課金しないとダメ
-        if is_div != 1:
-            article_name = driver.find_element(By.XPATH, '//h1[@class="sc-1vjtieq-4 jPGGNN"]').get_attribute("innerHTML")
-            print("cullentDL is {}".format(article_name))
-            imgs = driver.find_elements(By.XPATH, '//div[@class="sc-aak26t-2 klekfM"]')
-            print(len(imgs))
-            for j in range(len(imgs)):
-                if len(imgs) == 1:
-                    img = driver.find_element(By.XPATH, "/html/body/div[1]/div[5]/div[1]/div/div[3]/div/div[1]/div/article/div[3]/div/div/div/div/a/div/img")
-                else:
-                    img = driver.find_element(By.XPATH, "/html/body/div[1]/div[5]/div[1]/div/div[3]/div/div[1]/div/article/div[3]/div[{}]/div/div/div/a/div/img".format(j + 1))
-                imgurl = img.get_attribute('href')
-                imglist.append([article_name, imgurl])
-                # download_file(imgurl, target_dir, article_name + "p" + str(i + 1))
+        height = height / 430
+        time.sleep(0.8)
+        # scroll(driver, height, True)
+        article_name: str = driver.find_element(By.XPATH, '//h1[@class="sc-1vjtieq-4 jPGGNN"]').get_attribute("innerHTML")
+        idx = article_name.find("<")
+        if idx != -1:
+            shaped_article_name = article_name[:idx]
         else:
-            print("{} is need maney".format(article_name))
-    print(imglist)
+            shaped_article_name = article_name
+        is_div = driver.find_elements(By.XPATH, '//div[@class="sc-1uv5uvv-0 dfWOmG"]')
+        # 特定のdivが1の場合課金しないとダメ
+        if len(is_div) != 1:
+            print("cullentservei is " + shaped_article_name + "  " + str(len(articlelist)) + "/" + str(i + 1) + ' {:.2%}'.format(i / len(articlelist)))
+            imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
+            if len(imgparelent) == 0:
+                print("this article has not image")
+            else:
+                # while nom != count:
+                for k in range(15):
+                    for j in range(1, int(height) - 2):
+                        driver.execute_script("window.scrollTo(0, "+str(j * 430)+");")
+                        time.sleep(0.35)
+                    nom = 1
+                    count = 0
+                    imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
+                    imgs = imgparelent[0].find_elements(By.TAG_NAME, "img")
+                    if len(imgs) == 0:
+                        break
+                    print("imgsnom is {}".format(len(imgs)))
+                    imglistpart = []
+                    for l in imgs:
+                        imgurl = l.get_attribute('src')
+                        if imgurl is not None:
+                            count += 1
+                        imglistpart.append([shaped_article_name + " P" + str(nom), imgurl])
+                        nom += 1
+                    print(count)
+                    if len(imgs) == count:
+                        for m in imglistpart:
+                            imglist.append(m)
+                        break
+                    else:
+                        # scroll(driver, height, False)
+                        for i in reversed(range(1, int(height))):
+                            driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
+                            time.sleep(0.35)
+                # sys.exit(1)
+        else:
+            print("{} is need maney".format(shaped_article_name))
+    # print(imglist)
+    return imglist
 
 
-# def get_img:
+def scroll(driver, height, bool):
+    for i in range(1, int(height) - 2):
+        nom = '' if bool else '-' + str(i * 430)
+        driver.execute_script("window.scrollTo(0, " + nom + ");")
+        time.sleep(0.2)
 
 
-def download_file(url, target_dir, name):
-    try:
-        with urllib.request.urlopen(url) as web_file, open(target_dir + name, 'wb') as local_file:
-            local_file.write(web_file.read())
-    except urllib.error.URLError as e:
-        print(e)
+def write_img(driver, imglist, tgt_dir, target_name, download_path):
+    for i in imglist:
+        print("downloading File :" + i[0])
+        # download_file(driver, i[1], target_dir, i[0], target_name)
+        driver.get(i[1])
+        img_name = target_name + " - " + i[0] + ".png"
+        script_str = """
+        window.URL = window.URL || window.webkitURL;
+        var xhr = new XMLHttpRequest(),
+        a = document.createElement('a'), file;
+        xhr.open('GET', '""" + i[1] + """', true);
+        xhr.responseType = 'blob';
+        xhr.onload = function () {
+        file = new Blob([xhr.response], { type : 'application/octet-stream' });
+        a.href = window.URL.createObjectURL(file);
+        a.download = '""" + img_name + """';
+        a.click();
+        };
+        xhr.send();
+        """
+        driver.execute_script(script_str)
+        # while os.path.isfile(download_path + img_name) is False:
+        # time.sleep(0.2)
+        time.sleep(1)
+        print("downloaded!")
+        if os.path.isfile(download_path + img_name) is True:
+            shutil.move(download_path + img_name, tgt_dir + img_name)
 
 
 main()
