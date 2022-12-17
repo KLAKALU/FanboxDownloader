@@ -21,7 +21,6 @@ def main():
     target_url = target_url.replace("\n", "")
     tgt_dir = datalist[4]
     tgt_dir = tgt_dir.replace("\n", "")
-    print(tgt_dir)
     target_name = datalist[5]
     target_name = target_name.replace("\n", "")
     print("Downloading " + target_name + "s fanbox imgs!")
@@ -97,13 +96,14 @@ def get_imglist(driver, articlelist):
         time.sleep(0.8)
         # scroll(driver, height, True)
         article_name: str = driver.find_element(By.XPATH, '//h1[@class="sc-1vjtieq-4 jPGGNN"]').get_attribute("innerHTML")
+        # 記事名からアイコンを取り除く
         idx = article_name.find("<")
         if idx != -1:
             shaped_article_name = article_name[:idx]
         else:
             shaped_article_name = article_name
+        # is_divに要素が入っている場合は要課金
         is_div = driver.find_elements(By.XPATH, '//div[@class="sc-1uv5uvv-0 dfWOmG"]')
-        # 特定のdivが1の場合課金しないとダメ
         if len(is_div) == 1:
             print("{} is need maney".format(shaped_article_name))
         else:
@@ -112,17 +112,15 @@ def get_imglist(driver, articlelist):
             if len(imgparelent) == 0:
                 print("this article has not image")
             else:
-                bool = True
+                isreversed = False
                 for k in range(10):
-                    scroll(driver, height, bool)
                     nom = 1
                     count = 0
+                    imglistpart = []
+                    scroll(driver, height, isreversed)
                     imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
                     imgs = imgparelent[0].find_elements(By.TAG_NAME, "img")
-                    if len(imgs) == 0:
-                        break
                     print("imgsnom is {}".format(len(imgs)))
-                    imglistpart = []
                     for l in imgs:
                         imgurl = l.get_attribute('src')
                         if imgurl is not None:
@@ -135,21 +133,19 @@ def get_imglist(driver, articlelist):
                             imglist.append(m)
                         break
                     else:
-                        bool = False
+                        isreversed = True
                 # sys.exit(1)
-            
     return imglist
 
 
-def scroll(driver, height, bool):
-    if bool:
-        for i in range(1, int(height) - 2):
-            driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
-            time.sleep(0.35)
+def scroll(driver, height, isreversed):
+    if not isreversed:
+        list = range(1, int(height) - 2)
     else:
-        for i in reversed(range(1, int(height))):
-            driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
-            time.sleep(0.35) 
+        list = reversed(range(1, int(height)))
+    for i in list:
+        driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
+        time.sleep(0.35)
 
 
 def write_img(driver, imglist, tgt_dir, target_name, download_path):
@@ -157,6 +153,7 @@ def write_img(driver, imglist, tgt_dir, target_name, download_path):
         print("downloading File :" + i[0])
         driver.get(i[1])
         img_name = target_name + " - " + i[0] + ".png"
+        #　右クリックして保存(javascript)
         script_str = """
         window.URL = window.URL || window.webkitURL;
         var xhr = new XMLHttpRequest(),
