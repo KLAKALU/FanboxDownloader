@@ -20,7 +20,7 @@ def main():
     target_url = datalist[3]
     target_url = target_url.replace("\n", "")
     tgt_dir = datalist[4]
-    tgt_dir = tgt_dir.replace
+    tgt_dir = tgt_dir.replace("\n", "")
     print(tgt_dir)
     target_name = datalist[5]
     target_name = target_name.replace("\n", "")
@@ -46,6 +46,7 @@ def main():
             file.close
         login(driver, mail, password)
     write_img(driver, imglist, tgt_dir, target_name, download_path)
+    print("Download Done!")
     driver.close
 
 
@@ -109,11 +110,9 @@ def get_imglist(driver, articlelist):
             if len(imgparelent) == 0:
                 print("this article has not image")
             else:
-                # while nom != count:
-                for k in range(15):
-                    for j in range(1, int(height) - 2):
-                        driver.execute_script("window.scrollTo(0, "+str(j * 430)+");")
-                        time.sleep(0.35)
+                bool = True
+                for k in range(10):
+                    scroll(driver, height, bool)
                     nom = 1
                     count = 0
                     imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
@@ -134,28 +133,27 @@ def get_imglist(driver, articlelist):
                             imglist.append(m)
                         break
                     else:
-                        # scroll(driver, height, False)
-                        for i in reversed(range(1, int(height))):
-                            driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
-                            time.sleep(0.35)
+                        bool = False
                 # sys.exit(1)
         else:
             print("{} is need maney".format(shaped_article_name))
-    # print(imglist)
     return imglist
 
 
 def scroll(driver, height, bool):
-    for i in range(1, int(height) - 2):
-        nom = '' if bool else '-' + str(i * 430)
-        driver.execute_script("window.scrollTo(0, " + nom + ");")
-        time.sleep(0.2)
+    if bool:
+        for i in range(1, int(height) - 2):
+            driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
+            time.sleep(0.35)
+    else:
+        for i in reversed(range(1, int(height))):
+            driver.execute_script("window.scrollTo(0, "+str(i * 430)+");")
+            time.sleep(0.35) 
 
 
 def write_img(driver, imglist, tgt_dir, target_name, download_path):
     for i in imglist:
         print("downloading File :" + i[0])
-        # download_file(driver, i[1], target_dir, i[0], target_name)
         driver.get(i[1])
         img_name = target_name + " - " + i[0] + ".png"
         script_str = """
@@ -176,7 +174,8 @@ def write_img(driver, imglist, tgt_dir, target_name, download_path):
         # while os.path.isfile(download_path + img_name) is False:
         # time.sleep(0.2)
         time.sleep(1)
-        print("downloaded!")
+        download_bar = str(imglist.index(i) + 1) + "/" + str(len(imglist))
+        print("{} downloaded!".format(download_bar))
         if os.path.isfile(download_path + img_name) is True:
             shutil.move(download_path + img_name, tgt_dir + img_name)
 
