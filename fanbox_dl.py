@@ -104,7 +104,9 @@ def get_imglist(driver, articlelist):
             shaped_article_name = article_name
         is_div = driver.find_elements(By.XPATH, '//div[@class="sc-1uv5uvv-0 dfWOmG"]')
         # 特定のdivが1の場合課金しないとダメ
-        if len(is_div) != 1:
+        if len(is_div) == 1:
+            print("{} is need maney".format(shaped_article_name))
+        else:
             print("cullentservei is " + shaped_article_name + "  " + str(len(articlelist)) + "/" + str(i + 1) + ' {:.2%}'.format(i / len(articlelist)))
             imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
             if len(imgparelent) == 0:
@@ -135,8 +137,7 @@ def get_imglist(driver, articlelist):
                     else:
                         bool = False
                 # sys.exit(1)
-        else:
-            print("{} is need maney".format(shaped_article_name))
+            
     return imglist
 
 
