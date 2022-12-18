@@ -9,6 +9,11 @@ from selenium.webdriver.common.by import By
 
 
 def main():
+    isHighquolity = input("isHighquolity? yes/no > ")
+    if isHighquolity == "yes":
+        isHighquolity = True
+    else:
+        isHighquolity =False
     driver = webdriver.Firefox('C:/Users/playe/fanboxdownloader')
     file = open('data.txt', 'r', encoding='utf-8')
     datalist = file.readlines()
@@ -29,10 +34,11 @@ def main():
     button = driver.find_element(By.XPATH, '/html/body/div/div[4]/div[2]/div/div/div/div[5]/button')
     button.click()
     if os.path.isfile(tgt_dir + 'imglist.csv') is False:
-        articlelist = get_articlelist(driver, target_url)
+        # articlelist = get_articlelist(driver, target_url)
+        articlelist = ['https://nakai-zard.fanbox.cc/posts/465386']
         print(articlelist)
         login(driver, mail, password)
-        imglist = get_imglist(driver, articlelist)
+        imglist = get_imglist(driver, articlelist, isHighquolity)
         with open(tgt_dir + 'imglist.csv', 'x', encoding='utf-8') as file:
             writer = csv.writer(file, lineterminator='\n')
             writer.writerows(imglist)
@@ -87,14 +93,14 @@ def get_articlelist(driver, target_url):
     return articlelist
 
 
-def get_imglist(driver, articlelist):
+def get_imglist(driver, articlelist, isHighquolity):
     imglist = []
     for i in range(len(articlelist)):
         driver.get(articlelist[len(articlelist) - i - 1])
         height = driver.execute_script("return document.body.scrollHeight")
         height = height / 430
+        driver.execute_script("window.scrollTo(0, 850);")
         time.sleep(0.8)
-        # scroll(driver, height, True)
         article_name: str = driver.find_element(By.XPATH, '//h1[@class="sc-1vjtieq-4 jPGGNN"]').get_attribute("innerHTML")
         # 記事名からアイコンを取り除く
         idx = article_name.find("<")
@@ -107,33 +113,47 @@ def get_imglist(driver, articlelist):
         if len(is_div) == 1:
             print("{} is need maney".format(shaped_article_name))
         else:
+            isblog = False
+            # isreversed = False
+            scroll(driver, height, False)
             print("cullentservei is " + shaped_article_name + "  " + str(len(articlelist)) + "/" + str(i + 1) + ' {:.2%}'.format(i / len(articlelist)))
             imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
             if len(imgparelent) == 0:
-                print("this article has not image")
-            else:
-                isreversed = False
-                for k in range(10):
-                    nom = 1
-                    count = 0
-                    imglistpart = []
-                    scroll(driver, height, isreversed)
+                isblog = True
+                imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-8828c0-0 eyukNE"]')
+                if len(imgparelent) == 0:
+                    print("this article has not image")
+                    continue
+            for k in range(10):
+                nom = 1
+                count = 0
+                imglistpart = []
+                if isblog:
+                    imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-8828c0-0 eyukNE"]')
+                else:
                     imgparelent = driver.find_elements(By.XPATH, '//div[@class="sc-1vjtieq-1 eLScmM"]')
+                if isHighquolity:
+                    imgs = imgparelent[0].find_elements(By.TAG_NAME, "a")
+                else:
                     imgs = imgparelent[0].find_elements(By.TAG_NAME, "img")
-                    print("imgsnom is {}".format(len(imgs)))
-                    for l in imgs:
-                        imgurl = l.get_attribute('src')
-                        if imgurl is not None:
-                            count += 1
-                        imglistpart.append([shaped_article_name + " P" + str(nom), imgurl])
-                        nom += 1
-                    print(count)
-                    if len(imgs) == count:
-                        for m in imglistpart:
-                            imglist.append(m)
-                        break
+                print("imgsnom is {}".format(len(imgs)))
+                for l in imgs:
+                    if isHighquolity:
+                        imgurl = l.get_attribute('href')
                     else:
-                        isreversed = True
+                        imgurl = l.get_attribute('src')
+                    if imgurl is not None:
+                        count += 1
+                    imglistpart.append([shaped_article_name + " P" + str(nom), imgurl])
+                    nom += 1
+                print(count)
+                if len(imgs) == count:
+                    for m in imglistpart:
+                        imglist.append(m)
+                    break
+                else:
+                    # isreversed = True
+                    scroll(driver, height, True)
                 # sys.exit(1)
     return imglist
 
@@ -153,7 +173,7 @@ def write_img(driver, imglist, tgt_dir, target_name, download_path):
         print("downloading File :" + i[0])
         driver.get(i[1])
         img_name = target_name + " - " + i[0] + ".png"
-        #　右クリックして保存(javascript)
+        # 右クリックして保存(javascript)
         script_str = """
         window.URL = window.URL || window.webkitURL;
         var xhr = new XMLHttpRequest(),
